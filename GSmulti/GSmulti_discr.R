@@ -47,28 +47,29 @@ monte_carlo_simulation <- function(test, hyp, nMC = 10000) {
 
 comp <- function(s, n, num, l, th, M) {
   k = length(th)
-res=0
+  res = 0
   for (i in 1:k) { if (i == num)next
     res = res + l[i, num] * lr(s, th[i], cumsum(M)[n])
   }
   return(res)
 }
+
 dividing <- function(n, l, th, M) {
-    a = sapply(0:(maxval * n), function(s) {
-      which.min(sapply(1:length(th), function(num) comp(s, n, num, l, th, M))) })
-    b = sapply(0:(maxval * n),
-               function(s) { min(sapply(1:length(th), function(num) comp(s, n, num, l, th, M))) })
-    return(rbind(a, b))
-  }
+  a = sapply(0:(maxval * n), function(s) {
+    which.min(sapply(1:length(th), function(num) comp(s, n, num, l, th, M))) })
+  b = sapply(0:(maxval * n),
+             function(s) { min(sapply(1:length(th), function(num) comp(s, n, num, l, th, M))) })
+  return(rbind(a, b))
+}
 
 back <- function(s, n, M, previous) {
-    tmp = 0
-    for (i in 0:maxval) {
-      prod = previous[2, s + i+1] * pmf(i, M[n], 0)
-      tmp = tmp + prod
-    }
-    return(tmp + cost_fn(M[n]) * weighted(s, gam, thgam, ifelse(n > 1, cumsum(M)[n - 1], 0)))
+  tmp = 0
+  for (i in 0:maxval) {
+    prod = previous[2, s + i + 1] * pmf(i, M[n], 0)
+    tmp = tmp + prod
   }
+  return(tmp + cost_fn(M[n]) * weighted(s, gam, thgam, ifelse(n > 1, cumsum(M)[n - 1], 0)))
+}
 
 ##########################################
 OptPlan <- function(M, l, th, gam, thgam, cost_fn, maxval) {
@@ -77,11 +78,11 @@ OptPlan <- function(M, l, th, gam, thgam, cost_fn, maxval) {
 
   step <- function(n, l, th, M, previous) {
     present = dividing(n - 1, l, th, M)
-    for (i in 0:(length(present[1,])-1 )) {
-      tmp = back(i , n, M, previous)
-      if (present[2, i +1] > tmp) {
-        present[2, i +1] = tmp
-        present[1, i+1 ] = 0
+    for (i in 0:(length(present[1,]) - 1)) {
+      tmp = back(i, n, M, previous)
+      if (present[2, i + 1] > tmp) {
+        present[2, i + 1] = tmp
+        present[1, i + 1] = 0
       }
     }
     return(present)

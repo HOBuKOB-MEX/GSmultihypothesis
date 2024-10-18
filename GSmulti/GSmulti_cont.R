@@ -245,7 +245,7 @@ OptPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
       }
     }
   }
-  if (length(M) > 1)  Lagr = M[1] + exper1(0, 1, l = l, th = th, M = M)
+  if (length(M) > 1)  Lagr = cost_fn(M[1]) + exper1(0, 1, l = l, th = th, M = M)
   else Lagr = exper0(0, 1, l, th, M)
   return(list(data = test, info = list(theta = th, lambda = l, M = M, gridsz = gridsz, vartheta = thgam, gamma = gam, const_fn = cost_fn, Lagr = Lagr)))
 }
