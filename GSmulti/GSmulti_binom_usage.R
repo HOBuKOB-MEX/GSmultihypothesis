@@ -1,6 +1,6 @@
 source("./GSmulti/GSmulti_binom.R")
 
-cost_fn <- function(x)x
+cost_fn <- function(x, k) x
 print("#################################################", quote = F)
 print("Example for binomial distribution", quote = F)
 print("#################################################", quote = F)

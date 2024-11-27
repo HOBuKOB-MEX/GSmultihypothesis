@@ -68,7 +68,7 @@ back <- function(s, n, M, previous) {
     prod = previous[2, s + i + 1] * pmf(i, M[n], 0)
     tmp = tmp + prod
   }
-  return(tmp + cost_fn(M[n]) * weighted(s, gam, thgam, ifelse(n > 1, cumsum(M)[n - 1], 0)))
+  return(tmp + cost_fn(M[n], n) * weighted(s, gam, thgam, ifelse(n > 1, cumsum(M)[n - 1], 0)))
 }
 
 ##########################################
@@ -169,7 +169,7 @@ ESS <- function(test, th0, cost_fn) {
     val = array(0, length(present))
     for (i in 1:(length(present))) {
       if (present[i] == 0)
-        val[i] = cost_fn(M[n]) + back(i, n, M, previous)
+        val[i] = cost_fn(M[n], n) + back(i, n, M, previous)
     }
     return(val)
   }
@@ -184,6 +184,71 @@ ESS <- function(test, th0, cost_fn) {
       if (n == 2)break
       n = n - 1
     }
-  return(cost_fn(M[1]) + back(1, 1, M, val))
+  return(cost_fn(M[1], 1) + back(1, 1, M, val))
+}
+
+DBCPlan <- function(M, l, th, gam, thgam,  cost_fn, margin = 20) {
+
+  exper1 <- function(x, n, l, th, M) {
+    cost_fn(M[n], n) * weighted(x, gam, thgam, cumsum(M)[n - 1])
+  }
+
+
+  eff1 <- function(x, n, l, th, M)mincomp(x, n - 1, l, th, M) - exper1(x, n, l, th, M)
+  eff1.v <- function(x, nd, l, th, M)Vectorize(eff1, vectorize.args = "x")(x = x, n = nd, l = l, th = th, M = M)
+
+  ##############################
+  n = length(M)
+  k = length(th)
+  test = list()
+
+  a = dividing(n, l, th, M)
+
+  test[[n]] = list(n = n, div = a)
+
+  a = dividing(n - 1, l, th, M)
+  cInt = array(dim = c(k - 1, 2))
+
+  left = uniroot(eff1, c(a[1] - margin, a[1]), n = n, l = l, th = th, M = M, extendInt = "upX")$root
+  right = uniroot(eff1, c(a[k - 1], a[k - 1] + margin), n = n, l = l, th = th, M = M, extendInt = "downX")$root
+
+  limits = sort(uniroot.all(eff1.v, lower = left - margin, upper = right + margin, nd = n, l = l, th = th, M = M))
+  nInt = length(limits) / 2
+
+  current = 1
+  cInt = array(dim = c(k - 1, 2))
+  for (i in 1:nInt) {
+    cInt[i, 1] = limits[current]
+    cInt[i, 2] = limits[current + 1]
+    current = current + 2
+  }
+  test[[n - 1]] = list(n = n - 1, div = a, nInt = nInt, cInt = cInt)
+
+  n = n - 1
+  if (n > 1)
+  {
+    repeat {
+      a = dividing(n - 1, l, th, M)
+      left = uniroot(eff1, c(a[1] - margin, a[1]), n = n, l = l, th = th, M = M, extendInt = "upX")$root
+      right = uniroot(eff1, c(a[k - 1], a[k - 1] + margin), n = n, l = l, th = th, M = M, extendInt = "downX")$root
+      limits = sort(uniroot.all(eff1.v, lower = left - margin, upper = right + margin, nd = n, l = l, th = th, M = M))
+      nInt = length(limits) / 2
+
+      current = 1
+      cInt = array(dim = c(k - 1, 2))
+      for (i in 1:nInt) {
+        cInt[i, 1] = limits[current]
+        cInt[i, 2] = limits[current + 1]
+        current = current + 2
+      }
+
+      test[[n - 1]] = list(n = n - 1, div = a, nInt = nInt, cInt = cInt)
+      if (n == 2)break
+      n = n - 1
+    }
+  }
+
+  return(list(data = test, info = list(theta = th, lambda = l, M = M, gridsz = gridsz, vartheta = thgam, gamma = gam, const_fn = cost_fn)))
+
 }
 

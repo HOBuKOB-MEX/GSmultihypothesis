@@ -118,7 +118,7 @@ OptPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
 
       }
     }
-    return(tmp + cost_fn(M[n]) * ifelse(n > 1, weighted(x, gam, thgam, cumsum(M)[n - 1]), 1))
+    return(tmp + cost_fn(M[n], n) * ifelse(n > 1, weighted(x, gam, thgam, cumsum(M)[n - 1]), 1))
   }
 
 
@@ -181,7 +181,7 @@ OptPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
       }
     for (int in 1:nInt)
       s = s + intgr(gridlist1[[int]]$sval, gridlist1[[int]]$rhoval, x, M[n])
-    return(s + cost_fn(M[n]) * weighted(x, gam, thgam, cumsum(M)[n - 1]))
+    return(s + cost_fn(M[n], n) * weighted(x, gam, thgam, cumsum(M)[n - 1]))
   }
 
   eff0 <- function(x, n, l, th, M)mincomp(x, n - 1, l, th, M) - exper0(x, n, l, th, M)
@@ -245,7 +245,7 @@ OptPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
       }
     }
   }
-  if (length(M) > 1)  Lagr = cost_fn(M[1]) + exper1(0, 1, l = l, th = th, M = M)
+  if (length(M) > 1)  Lagr = cost_fn(M[1], 1) + exper1(0, 1, l = l, th = th, M = M)
   else Lagr = exper0(0, 1, l, th, M)
   return(list(data = test, info = list(theta = th, lambda = l, M = M, gridsz = gridsz, vartheta = thgam, gamma = gam, const_fn = cost_fn, Lagr = Lagr)))
 }
@@ -254,14 +254,14 @@ OptPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
 ESS <- function(test, th0, gridsz, cost_fn) {
 
   asn0 <- function(x, n, th0, M) {
-    return(cost_fn(M[n]) * lr(x, th0, ifelse(n > 1, cumsum(M)[n - 1], 0)))
+    return(cost_fn(M[n], n) * lr(x, th0, ifelse(n > 1, cumsum(M)[n - 1], 0)))
   }
 
   asn1 <- function(x, n, th0, M) {
     k = length(test$info$th)
     nInt = test$data[[n]]$nInt
     cInt = test$data[[n]]$cInt
-    tmp1 = cost_fn(M[n]) * lr(x, th0, ifelse(n > 1, cumsum(M)[n - 1], 0))
+    tmp1 = cost_fn(M[n], n) * lr(x, th0, ifelse(n > 1, cumsum(M)[n - 1], 0))
     for (i in 1:nInt)
       tmp1 = tmp1 + intgr(gridlist1[[i]]$sval, gridlist1[[i]]$rhoval, x, M[n])
     return(tmp1)
@@ -303,7 +303,7 @@ ESS <- function(test, th0, gridsz, cost_fn) {
 DBCPlan <- function(M, l, th, gam, thgam, gridsz, cost_fn, margin = 20) {
 
   exper1 <- function(x, n, l, th, M) {
-    cost_fn(M[n]) * weighted(x, gam, thgam, cumsum(M)[n - 1])
+    cost_fn(M[n], n) * weighted(x, gam, thgam, cumsum(M)[n - 1])
   }
 
 
